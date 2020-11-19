@@ -11,6 +11,24 @@ MPU6050 mpu;
 #define INTERRUPT_PIN 4 // use pin 2 on Arduino Uno & most boards
 #define LED_PIN 2       // (Arduino is 13, Teensy is 11, Teensy++ is 6)
 bool blinkState = false;
+int acceleration = 0;
+long int currentTime = 0;
+long int previousReading = 0;
+long int checkPeriod = 0;
+int minAcc = 0;
+int maxAcc = 0;
+int AccThresh = 1000;
+
+void readAcceleration()
+{
+  acceleration = abs(mpu.getAccelerationX()) + abs(mpu.getAccelerationY()) + abs(mpu.getAccelerationZ()) + 1500;
+}
+
+void setMinAndMax()
+{
+  maxAcc = acceleration > maxAcc ? acceleration : maxAcc;
+  minAcc = acceleration < minAcc ? acceleration : minAcc;
+}
 
 void setup()
 {
@@ -34,12 +52,29 @@ void setup()
 
   // configure LED for output
   pinMode(LED_PIN, OUTPUT);
+  readAcceleration();
+  minAcc = acceleration;
+  maxAcc = acceleration;
 }
 
 void loop()
 {
-
-  Serial.println(abs(mpu.getAccelerationX()) + abs(mpu.getAccelerationY()) + abs(mpu.getAccelerationZ()) + 1000);
-  blinkState = !blinkState;
-  digitalWrite(LED_PIN, blinkState);
+  currentTime = millis();
+  readAcceleration();
+  setMinAndMax();
+  if (currentTime - previousReading >= checkPeriod)
+  {
+    previousReading = currentTime;
+    if (maxAcc - minAcc >= AccThresh)
+    {
+      digitalWrite(LED_PIN, 1);
+      maxAcc = acceleration;
+      minAcc = acceleration;
+    }
+    else
+    {
+      digitalWrite(LED_PIN, 0);
+    }
+  }
+  digitalWrite(LED_PIN, 0);
 }
