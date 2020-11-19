@@ -14,10 +14,11 @@ bool blinkState = false;
 int acceleration = 0;
 long int currentTime = 0;
 long int previousReading = 0;
-long int checkPeriod = 0;
+long int previousReadingA = 0;
+long int checkPeriod = 500;
 int minAcc = 0;
 int maxAcc = 0;
-int AccThresh = 1000;
+int AccThresh = 15000;
 
 void readAcceleration()
 {
@@ -68,13 +69,18 @@ void loop()
     if (maxAcc - minAcc >= AccThresh)
     {
       digitalWrite(LED_PIN, 1);
-      maxAcc = acceleration;
-      minAcc = acceleration;
     }
     else
     {
       digitalWrite(LED_PIN, 0);
     }
+    maxAcc = acceleration;
+    minAcc = acceleration;
   }
-  digitalWrite(LED_PIN, 0);
+  if (currentTime - previousReadingA >= 100)
+  {
+    previousReadingA = currentTime;
+
+    Serial.println(maxAcc - minAcc);
+  }
 }
